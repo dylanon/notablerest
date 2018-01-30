@@ -40,7 +40,7 @@ module.exports = function(app, db) {
                 }
             }
         });
-    })
+    });
 
     // Handle DELETE requests
     app.delete('/notes/:id', (req, res) => {
@@ -61,5 +61,36 @@ module.exports = function(app, db) {
                 }
             }
         })
-    })
-}
+    });
+
+    // Handle PUT requests
+    app.put('/notes/:id', (req, res) => {
+        const capturedId = req.params.id;
+        // MongoDB stores IDs as ObjectIDs, so convert the id string
+        const queryObject = {
+            _id: new ObjectID(capturedId)
+        }
+        // Create an empty note
+        const note = {}
+        // Only update 'title' or 'text' properties that exist in the request
+        // Prevents missing request parameter from deleting property in the database
+        // Prevent addition of properties other than 'title' or 'text'
+        const possibleProperties = ['title', 'text'];
+        possibleProperties.forEach(property => {
+            if (req.body[property]) {
+                // Add property to new note
+                note[property] = req.body[property];
+            }
+        })
+        
+        // Update the requested note in the database
+        db.collection('notes').update(queryObject, note, (err, result) => {
+            if (err) {
+                console.log('Oops! An error has occurred.');
+            } else {
+                res.send(result);
+            }
+        });
+    });
+
+} // End of module.exports
