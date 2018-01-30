@@ -1,6 +1,9 @@
 // Note routes
 
+const ObjectID = require('mongodb').ObjectID;
+
 module.exports = function(app, db) {
+    // Handle POST requests
     app.post('/notes', (req, res) => {
         // Create the note
         const note = {
@@ -17,4 +20,46 @@ module.exports = function(app, db) {
             }
         })
     });
+
+    // Handle GET requests
+    app.get('/notes/:id', (req, res) => {
+        const capturedId = req.params.id
+        // MongoDB stores IDs as ObjectIDs, so convert the id string
+        const queryObject = {
+            _id: new ObjectID(capturedId)
+        }
+        db.collection('notes').findOne(queryObject, (err, result) => {
+            if (err) {
+                console.log('Oops! An error has occurred.');
+            } else {
+                // Respond with the requsted note, if it exists
+                if (result) {
+                    res.send(result);
+                } else {
+                    res.send('Note not found.');
+                }
+            }
+        });
+    })
+
+    // Handle DELETE requests
+    app.delete('/notes/:id', (req, res) => {
+        const capturedId = req.params.id;
+        // MongoDB stores IDs as ObjectIDs, so convert the id string
+        const queryObject = {
+            _id: new ObjectID(capturedId)
+        }
+        db.collection('notes').deleteOne(queryObject, (err, result) => {
+            if (err) {
+                console.log('Oops! An error has occurred.');
+            } else {
+                // Confirm if the item was deleted
+                if (result.result.n === 1) {
+                    res.send('Successfully deleted note with id ' + capturedId + '.');
+                } else {
+                    res.send('Could not find note with id ' + capturedId + ', so did not delete anything');
+                }
+            }
+        })
+    })
 }
